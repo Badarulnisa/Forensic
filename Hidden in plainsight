@@ -1,0 +1,73 @@
+Hidden in plainsight
+----------------------------------------------------------------
+Platform   : picoCTF (picoMini by CMU-Africa)
+Category   : Forensics
+Difficulty : Easy
+----------------------------------------------------------------
+
+Objective
+----------------------------------------------------------------
+A JPG image is provided. Something is hidden inside it. The goal
+is to find the hidden payload and extract the flag.
+
+Tools Used
+----------------------------------------------------------------
+- exiftool    : reads metadata embedded inside files
+- base64      : decodes Base64-encoded strings (built into Linux)
+- steghide    : extracts data hidden inside image/audio files
+
+Steps
+----------------------------------------------------------------
+1. Downloaded the JPG image from the challenge link.
+
+2. Ran exiftool to read all metadata inside the image:
+
+      exiftool img.jpg
+
+   Found a suspicious Comment field containing:
+
+      c3RlZ2hpZGU6Y0VGNmVuZHZjbVE9
+
+3. Recognized the trailing = as Base64 padding. Decoded it:
+
+      echo "c3RlZ2hpZGU6Y0VGNmVuZHZjbVE9" | base64 -d
+
+   Output:
+
+      steghide:cEF6endvcmQ=
+
+   This revealed the tool to use (steghide) and a Base64-encoded
+   password.
+
+4. Decoded the password:
+
+      echo "cEF6endvcmQ=" | base64 -d
+
+   Output:
+
+      pAzzword
+
+5. Used steghide to extract the hidden file from the image:
+
+      steghide extract -sf img.jpg
+
+   Entered passphrase: pAzzword
+   steghide wrote extracted data to flag.txt.
+
+6. Read the flag:
+
+      cat flag.txt
+
+Key Takeaway
+----------------------------------------------------------------
+Image files carry metadata that is invisible to the naked eye.
+Always run exiftool on any image in a forensics challenge before
+doing anything else. Look for unusual fields, especially ones
+with Base64-encoded values (recognizable by the trailing = or ==
+padding). Steghide can embed entire files inside images protected
+by a password. The challenge chained two layers: metadata hiding
+the tool and password, and steganography hiding the actual flag.
+
+Flag
+----------------------------------------------------------------
+picoCTF{h1dd3n_1n_1m4g3_e7f5b969}
